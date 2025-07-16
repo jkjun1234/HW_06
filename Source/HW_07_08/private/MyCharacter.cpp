@@ -7,7 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraComponent.h"	
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+//#include "GameFramework/CharacterMovementComponent.h"
 
 AMyCharacter::AMyCharacter()
 {
@@ -106,20 +106,61 @@ void AMyCharacter::Move(const FInputActionValue& value)
 {
 	const FVector2D MoveInput = value.Get<FVector2D>(); // 입력 값에서 2D 벡터 가져오기
 
-	if (!FMath::IsNearlyZero(MoveInput.X))
+	if (!MoveInput.IsNearlyZero())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Moving horizontally: %f"), MoveInput.X); // 앞뒤 이동 로그 출력
-		AddActorLocalOffset( GetActorForwardVector() * MoveInput.X * MoveSpeed * GetWorld()->GetDeltaSeconds());	// 앞뒤 이동
-		AddActorLocalRotation(FRotator(0.0f, MoveInput.X * GetWorld()->GetDeltaSeconds(), 0.0f)); // 앞뒤 이동 시 회전 추가
+		// 컨트롤러의 회전값에서 Yaw만 추출
+		const FRotator ControlRot = Controller->GetControlRotation();
+		const FRotator YawRot(0, ControlRot.Yaw, 0);
+
+		// 컨트롤러(카메라) 기준 Forward/Right 벡터
+		const FVector Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
+		const FVector Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+
+		FVector MoveDirection = Forward * MoveInput.X + Right * MoveInput.Y; // 이동 방향 계산
+		MoveDirection.Normalize(); // 이동 방향 정규화
+
+		// 입력 방향을 월드 기준으로 변환
+		//FVector ForwardDirection = GetActorForwardVector(); // 앞뒤 이동
+		//FVector RightDirection = GetActorRightVector(); // 좌우 이동
+		//FVector MoveDirection = (ForwardDirection * MoveInput.X + RightDirection * MoveInput.Y).GetSafeNormal(); // 이동 방향 계산
+		float DeltaTime = GetWorld()->GetDeltaSeconds(); // 델타 시간 가져오기
+
+		// 이동 적용(속도 * 방향 * 델타타임)
+		FVector Movement = MoveDirection * MoveSpeed * DeltaTime;
+		AddActorWorldOffset(Movement); // dnjfem 오프셋으로 이동 적용
+
+		if (!MoveDirection.IsNearlyZero())
+		{
+			FRotator TargetRot = MoveDirection.Rotation(); // 이동 방향의 회전 계산
+			TargetRot.Pitch = 0.0f; // 피치 값은 0으로 설정하여 수평 회전만 적용
+			TargetRot.Roll = 0.0f; // 롤 값도 0으로 설정하여 수평 회전만 적용
+
+			SetActorRotation(FMath::RInterpTo(GetActorRotation(), TargetRot, DeltaTime, 5.0f)); // 현재 회전에서 목표 회전으로 보간
+		}
 	}
 
-	if (!FMath::IsNearlyZero(MoveInput.Y))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Moving vertically: %f"), MoveInput.Y); // 좌우 이동 로그 출력
-		AddActorLocalOffset(GetActorRightVector() * MoveInput.Y * MoveSpeed * GetWorld()->GetDeltaSeconds());
-		AddActorLocalRotation(FRotator(0.0f, MoveInput.Y * GetWorld()->GetDeltaSeconds(), 0.0f)); // 앞뒤 이동 시 회전 추가
-	}
 }
+
+//void AMyCharacter::Move(const FInputActionValue& value)
+//{
+//	const FVector2D MoveInput = value.Get<FVector2D>(); // 입력 값에서 2D 벡터 가져오기
+//	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController()); // 플레이어 컨트롤러 가져오기
+//	FRotator ControlRot = PlayerController->GetControlRotation(); // 컨트롤러 회전 가져오기
+//	FVector MoveDirection = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X); // 컨트롤러 회전으로 이동 방향 계산
+//
+//	if (!FMath::IsNearlyZero(MoveInput.X))
+//	{
+//
+//		AddActorLocalOffset(FVector(MoveInput.X * MoveSpeed * GetWorld()->GetDeltaSeconds(), 0.0f, 0.0f)); // 좌우 이동
+//	}
+//
+//	if (!FMath::IsNearlyZero(MoveInput.Y))
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("Moving vertically: %f"), MoveInput.Y); // 좌우 이동 로그 출력
+//		AddActorLocalOffset(MoveDirection * MoveSpeed * GetWorld()->GetDeltaSeconds());
+//		AddActorLocalRotation(FRotator( MoveInput.Y * GetWorld()->GetDeltaSeconds(),0.0f, 0.0f)); // 앞뒤 이동 시 회전 추가
+//	}
+//}
 
 
 
