@@ -119,10 +119,6 @@ void AMyCharacter::Move(const FInputActionValue& value)
 		FVector MoveDirection = Forward * MoveInput.X + Right * MoveInput.Y; // 이동 방향 계산
 		MoveDirection.Normalize(); // 이동 방향 정규화
 
-		// 입력 방향을 월드 기준으로 변환
-		//FVector ForwardDirection = GetActorForwardVector(); // 앞뒤 이동
-		//FVector RightDirection = GetActorRightVector(); // 좌우 이동
-		//FVector MoveDirection = (ForwardDirection * MoveInput.X + RightDirection * MoveInput.Y).GetSafeNormal(); // 이동 방향 계산
 		float DeltaTime = GetWorld()->GetDeltaSeconds(); // 델타 시간 가져오기
 
 		// 이동 적용(속도 * 방향 * 델타타임)
@@ -141,29 +137,6 @@ void AMyCharacter::Move(const FInputActionValue& value)
 
 }
 
-//void AMyCharacter::Move(const FInputActionValue& value)
-//{
-//	const FVector2D MoveInput = value.Get<FVector2D>(); // 입력 값에서 2D 벡터 가져오기
-//	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController()); // 플레이어 컨트롤러 가져오기
-//	FRotator ControlRot = PlayerController->GetControlRotation(); // 컨트롤러 회전 가져오기
-//	FVector MoveDirection = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X); // 컨트롤러 회전으로 이동 방향 계산
-//
-//	if (!FMath::IsNearlyZero(MoveInput.X))
-//	{
-//
-//		AddActorLocalOffset(FVector(MoveInput.X * MoveSpeed * GetWorld()->GetDeltaSeconds(), 0.0f, 0.0f)); // 좌우 이동
-//	}
-//
-//	if (!FMath::IsNearlyZero(MoveInput.Y))
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("Moving vertically: %f"), MoveInput.Y); // 좌우 이동 로그 출력
-//		AddActorLocalOffset(MoveDirection * MoveSpeed * GetWorld()->GetDeltaSeconds());
-//		AddActorLocalRotation(FRotator( MoveInput.Y * GetWorld()->GetDeltaSeconds(),0.0f, 0.0f)); // 앞뒤 이동 시 회전 추가
-//	}
-//}
-
-
-
 void AMyCharacter::Look(const FInputActionValue& value)
 {
 	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController()); // 플레이어 컨트롤러 가져오기
@@ -174,14 +147,12 @@ void AMyCharacter::Look(const FInputActionValue& value)
 	{
 		ControlRot.Yaw += LookInput.X; // 입력 값의 X를 사용하여 Yaw 회전 추가
 		PlayerController->SetControlRotation(ControlRot); // 컨트롤러 회전 설정
-		//PlayerController->AddYawInput(LookInput.X); // 컨트롤러 회전 설정
 		UE_LOG(LogTemp, Warning, TEXT("Looking horizontally: %f"), ControlRot.Yaw); // 좌우 시점 조정 로그 출력
 	}
 	if (!FMath::IsNearlyZero(LookInput.Y))
 	{
 		ControlRot.Pitch += LookInput.Y; // 입력 값의 Y를 사용하여 Pitch 회전 추가
 		PlayerController->SetControlRotation(ControlRot); // 컨트롤러 회전 설정
-		//PlayerController->AddPitchInput(LookInput.Y); // 컨트롤러 회전 설정
 		UE_LOG(LogTemp, Warning, TEXT("Looking vertically: %f"), ControlRot.Pitch); // 상하 시점 조정 로그 출력
 	}
 }
