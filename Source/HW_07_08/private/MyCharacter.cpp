@@ -1,6 +1,7 @@
 #include "MyCharacter.h"
 
 #include "EnhancedInputComponent.h"	// Enhanced Input 컴포넌트 헤더 파일
+#include "GameFramework/Controller.h"
 #include "MyPlayerController.h"	// 플레이어 컨트롤러 헤더 파일
 // 캡슐	컴포넌트, 스켈레탈 메쉬 컴포넌트, 카메라 컴포넌트, 스프링 암 컴포넌트 헤더 파일 포함
 #include "Components/CapsuleComponent.h"
@@ -105,16 +106,18 @@ void AMyCharacter::StopJump(const FInputActionValue& value)
 void AMyCharacter::Move(const FInputActionValue& value)
 {
 	const FVector2D MoveInput = value.Get<FVector2D>(); // 입력 값에서 2D 벡터 가져오기
+	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController()); // 플레이어 컨트롤러 가져오기
 
 	if (!MoveInput.IsNearlyZero())
 	{
 		// 컨트롤러의 회전값에서 Yaw만 추출
-		const FRotator ControlRot = Controller->GetControlRotation();
+		const FRotator ControlRot = PlayerController->GetControlRotation();
 		const FRotator YawRot(0, ControlRot.Yaw, 0);
-
+		
 		// 컨트롤러(카메라) 기준 Forward/Right 벡터
 		const FVector Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
 		const FVector Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+	
 
 		FVector MoveDirection = Forward * MoveInput.X + Right * MoveInput.Y; // 이동 방향 계산
 		MoveDirection.Normalize(); // 이동 방향 정규화
